@@ -1,5 +1,8 @@
 """Generic banking importer for beancount."""
 
+import os
+import datetime
+
 import itertools
 from collections import namedtuple
 from beancount.core import data
@@ -17,6 +20,7 @@ class Importer(importer.ImporterProtocol, transactionbuilder.TransactionBuilder)
         self.initialized = False
         self.reader_ready = False
         self.custom_init_run = False
+        self.skip_balance_assertions=False
 
         # For overriding in custom_init()
         self.get_payee = lambda ot: ot.payee
@@ -99,6 +103,12 @@ class Importer(importer.ImporterProtocol, transactionbuilder.TransactionBuilder)
         except AttributeError:
             return self.currency
 
+    def minimum_date(self):
+        date_str = self.config["min_date"]
+        date = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+        date_only = date.date()
+        return date_only
+
     def extract(self, file, existing_entries=None):
         self.initialize(file)
         counter = itertools.count()
@@ -151,7 +161,9 @@ class Importer(importer.ImporterProtocol, transactionbuilder.TransactionBuilder)
 
             new_entries.append(entry)
 
-        new_entries += self.extract_balance(file, counter)
+        if not self.skip_balance_assertions:
+            new_entries += self.extract_balance(file, counter)
+
         new_entries += self.extract_custom_entries(file, counter)
 
         return new_entries
