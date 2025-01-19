@@ -51,7 +51,7 @@ class Importer(importer.ImporterProtocol, transactionbuilder.TransactionBuilder)
         """This method is for importers to override. The overridden method can
         look at the metatype ('transaction', 'balance', 'account', 'commodity', etc.)
         and the data dictionary to return additional metadata"""
-        return {}
+        return {'filing_account': self.config['main_account']}        
 
     def match_account_number(self, file_account, config_account):
         return file_account.endswith(config_account)
